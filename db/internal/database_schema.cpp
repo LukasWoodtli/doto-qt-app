@@ -46,7 +46,7 @@ struct mapping<bool> {
 
 }
 
-
+#if 0
 template<typename COLUMN_TYPE>
 struct column {
     using CPP_TYPE = COLUMN_TYPE;
@@ -65,6 +65,7 @@ template<typename... TABLES>
 using database = std::tuple<TABLES...>;
 
 struct NONE_TYPE {};
+#endif
 }
 
 
@@ -73,17 +74,20 @@ namespace db::internal {
 QStringList createSchemaQuerries() {
     static const QStringList createTableQuerries = {
 #define TABLE(name) { QString("CREATE TABLE IF NOT EXISTS " #name " (GUID TEXT UNIQUE")
-#define COLUMN(name, type, ...) + ", " #name " " + mappings::mapping<type>::DB_TYPE
+#define COLUMN(name, type) + ", " #name " " + mappings::mapping<type>::DB_TYPE
+#define FOREIGN_KEY(column, foreign_table, foreign_column) + ", FOREIGN KEY(" #column ") REFERENCES " #foreign_table "(" #foreign_column ")"
 #define ENDTABLE() + QStringLiteral(")") },
 #include "db_schema.xdef"
 #undef TABLE
 #undef COLUMN
+#undef FOREIGN_KEY
 #undef ENDTABLE
-    };
+};
 
     return createTableQuerries;
 }
 
+#if 0
 namespace {
 namespace generated::columns_ns {
 #define TABLE(name) namespace table_##name##_ns {
@@ -122,6 +126,8 @@ namespace generated::tables_ns {
 #undef ENDTABLE
 }
 }
+#endif
+
 }
 
 
