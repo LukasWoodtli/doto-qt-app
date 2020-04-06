@@ -17,7 +17,7 @@ private slots:
     }
 
     void testTaskTableExists() {
-        for (const auto& table: {"TASKS", "TASK_LISTS"}) {
+        for (const auto& table: {"TASKS", "TASK_LISTS", "SETTINGS"}) {
             QSqlQuery query = QSqlQuery();
             bool success = query.exec(checkIfTableExistsQuery(table));
             QVERIFY(success);
@@ -28,7 +28,8 @@ private slots:
     void test() {
         static const QStringList expected = {
             "CREATE TABLE IF NOT EXISTS TASKS (GUID TEXT UNIQUE, NAME STRING, DONE INT, DUE_DATE STRING)",
-            "CREATE TABLE IF NOT EXISTS TASK_LISTS (GUID TEXT UNIQUE, TASK STRING, FOREIGN KEY(TASK) REFERENCES TASKS(GUID))"};
+            "CREATE TABLE IF NOT EXISTS TASK_LISTS (GUID TEXT UNIQUE, TASK STRING, FOREIGN KEY(TASK) REFERENCES TASKS(GUID))",
+            "CREATE TABLE IF NOT EXISTS SETTINGS (GUID TEXT UNIQUE, SETTING STRING)"};
         QCOMPARE(db::internal::createSchemaQuerries(), expected);
     }
 
