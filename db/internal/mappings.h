@@ -9,8 +9,8 @@ namespace db::internal::mappings {
     struct mapping<QString> {
         static const constexpr auto DB_TYPE = "STRING";
 
-        std::string toDb(QString string) const {
-            return string.toLatin1().toStdString();
+        static QString toDb(QString string) {
+            return string.toUtf8();
         }
     };
 
@@ -18,8 +18,8 @@ namespace db::internal::mappings {
     struct mapping<QDate> {
         static const constexpr auto DB_TYPE = "STRING";
 
-        std::string toDb(QDate date) const {
-            return date.toString(Qt::ISODate).toLatin1().toStdString();
+        static QString toDb(QDate date) {
+            return date.toString(Qt::ISODate).toUtf8();
         }
     };
 
@@ -27,7 +27,7 @@ namespace db::internal::mappings {
     struct mapping<bool> {
         static const constexpr auto DB_TYPE = "INT";
 
-        std::string toDb(bool value) const {
+        static QString toDb(bool value) {
             if (value)
                 return "1";
             else

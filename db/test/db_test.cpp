@@ -25,12 +25,16 @@ private slots:
             QVERIFY(query.value(0).toBool());
         }
     }
-    void test() {
+    void testSchemaCreationSql() {
         static const QStringList expected = {
             "CREATE TABLE IF NOT EXISTS TASKS (GUID TEXT UNIQUE, NAME STRING, DONE INT, DUE_DATE STRING)",
             "CREATE TABLE IF NOT EXISTS TASK_LISTS (GUID TEXT UNIQUE, TASK STRING, FOREIGN KEY(TASK) REFERENCES TASKS(GUID))",
             "CREATE TABLE IF NOT EXISTS SETTINGS (GUID TEXT UNIQUE, SETTING STRING)"};
-        QCOMPARE(db::internal::createSchemaQuerries(), expected);
+        QCOMPARE(db::internal::schemaCreationSql(), expected);
+    }
+
+    void testSchemaCreationInMemory() {
+        m_db.createSchema();
     }
 
 private:
