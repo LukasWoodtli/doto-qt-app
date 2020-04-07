@@ -1,0 +1,27 @@
+Language: Cpp
+BasedOnStyle: Mozilla
+
+ColumnLimit: 80
+Cpp11BracedListStyle: true
+
+IndentWidth: 2
+TabWidth: 2
+UseTab: ForIndentation
+
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterStruct: false
+  AfterEnum: true
+  AfterFunction: false
+  AfterNamespace: false
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+
+SortIncludes: true
+
