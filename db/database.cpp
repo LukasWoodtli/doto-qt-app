@@ -13,11 +13,11 @@ void assertDbEncodingIsUtf8() {
 	Q_ASSERT(result);
 	query.next();
 	const QString encoding = query.value(0).toString();
-	if (encoding != "UTF-8") {
-		qFatal("Expected encoding UTF-8 got %s", encoding.toStdString().c_str());
+	qDebug() << "Database encoding is " << encoding;
+	Q_ASSERT(encoding == "UTF-8");
 	}
 }
-}
+
 
 namespace db {
 
