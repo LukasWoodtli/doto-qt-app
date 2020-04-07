@@ -2,37 +2,35 @@
 
 namespace db::internal::mappings {
 
-    template <class CPP_TYPE>
-    struct mapping;
+template<class CPP_TYPE>
+struct mapping;
 
-    template<>
-    struct mapping<QString> {
-        static const constexpr auto DB_TYPE = "STRING";
+template<>
+struct mapping<QString> {
+	static const constexpr auto DB_TYPE = "STRING";
 
-        static QString toDb(QString string) {
-            return string.toUtf8();
-        }
-    };
+	static QString toDb(const QString& string) { return string.toUtf8(); }
+};
 
-    template<>
-    struct mapping<QDate> {
-        static const constexpr auto DB_TYPE = "STRING";
+template<>
+struct mapping<QDate> {
+	static const constexpr auto DB_TYPE = "STRING";
 
-        static QString toDb(QDate date) {
-            return date.toString(Qt::ISODate).toUtf8();
-        }
-    };
+	static QString toDb(const QDate& date) {
+		return date.toString(Qt::ISODate).toUtf8();
+	}
+};
 
-    template<>
-    struct mapping<bool> {
-        static const constexpr auto DB_TYPE = "INT";
+template<>
+struct mapping<bool> {
+	static const constexpr auto DB_TYPE = "INT";
 
-        static QString toDb(bool value) {
-            if (value)
-                return "1";
-            else
-                return "0";
-        }
-    };
+	static QString toDb(bool value) {
+		if (value)
+			return "1";
+		else
+			return "0";
+	}
+};
 
 }
