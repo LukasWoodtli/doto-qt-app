@@ -35,7 +35,23 @@ DTO_T readRecord(const QUuid& uuid);
 #undef FOREIGN_KEY
 #undef ENDTABLE
 
-// READ
+// UPDATE
+template<class DTO_T>
+void updateRecord(const DTO_T& dto);
+
+#define TABLE(name)                                                            \
+	template<>                                                                   \
+	void updateRecord<name##_DTO>(const name##_DTO& dto);
+#define COLUMN(name, type, ...)
+#define FOREIGN_KEY(column, foreign_table, foreign_column)
+#define ENDTABLE()
+#include "db_schema.xdef"
+#undef TABLE
+#undef COLUMN
+#undef FOREIGN_KEY
+#undef ENDTABLE
+
+// DELETE
 template<class DTO_T>
 void deleteRecord(const QUuid& uuid);
 

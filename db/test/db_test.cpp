@@ -110,6 +110,58 @@ private slots:
 		QCOMPARE(tasksDtoFromDb.m_DUE_DATE, tasksDto.m_DUE_DATE);
 	}
 
+	void testReadUnavailableTaskRecord() {
+		const auto uuid = QUuid::createUuid();
+		db::TASKS_DTO tasksDtoFromDb = m_db->readRecord<db::TASKS_DTO>(uuid);
+		QCOMPARE(tasksDtoFromDb.m_Uuid, QUuid());
+	}
+
+	void testUpdateTaskRecord_data() {
+		QTest::addColumn<QString>("original_name");
+		QTest::addColumn<bool>("original_done");
+		QTest::addColumn<QDate>("original_due");
+
+		QTest::addColumn<QString>("new_name");
+		QTest::addColumn<bool>("new_done");
+		QTest::addColumn<QDate>("new_due");
+
+		QTest::newRow("task1") << "One" << false << QDate(1980, 7, 7) << "One"
+		                       << true << QDate(1980, 7, 7);
+		QTest::newRow("task2") << "Two" << true << QDate(2020, 7, 7) << "Three"
+		                       << true << QDate(2020, 7, 7);
+		QTest::newRow("task3") << "Four" << false << QDate(1970, 7, 7) << "Foure"
+		                       << true << QDate(2020, 7, 7);
+	}
+
+	void testUpdateTaskRecord() {
+		QFETCH(QString, original_name);
+		QFETCH(bool, original_done);
+		QFETCH(QDate, original_due);
+
+		QFETCH(QString, new_name);
+		QFETCH(bool, new_done);
+		QFETCH(QDate, new_due);
+
+		db::TASKS_DTO tasksDto{};
+		tasksDto.m_NAME = original_name;
+		tasksDto.m_DONE = original_done;
+		tasksDto.m_DUE_DATE = original_due;
+		m_db->createRecord(tasksDto);
+		m_db->readRecord<db::TASKS_DTO>(tasksDto.m_Uuid);
+
+		tasksDto.m_NAME = new_name;
+		tasksDto.m_DONE = new_done;
+		tasksDto.m_DUE_DATE = new_due;
+		m_db->updateRecord(tasksDto);
+
+		db::TASKS_DTO tasksDtoFromDb =
+		  m_db->readRecord<db::TASKS_DTO>(tasksDto.m_Uuid);
+		QCOMPARE(tasksDtoFromDb.m_Uuid, tasksDto.m_Uuid);
+		QCOMPARE(tasksDtoFromDb.m_NAME, tasksDto.m_NAME);
+		QCOMPARE(tasksDtoFromDb.m_DONE, tasksDto.m_DONE);
+		QCOMPARE(tasksDtoFromDb.m_DUE_DATE, tasksDto.m_DUE_DATE);
+	}
+
 	void testDeleteTaskRecord_data() {
 		QTest::addColumn<QString>("name");
 		QTest::addColumn<bool>("done");
@@ -142,11 +194,6 @@ private slots:
 		query.next();
 	}
 
-	void testReadUnavailableTaskRecord() {
-		const auto uuid = QUuid::createUuid();
-		db::TASKS_DTO tasksDtoFromDb = m_db->readRecord<db::TASKS_DTO>(uuid);
-		QCOMPARE(tasksDtoFromDb.m_Uuid, QUuid());
-	}
 
 private:
 	static QString checkIfTableExistsQuery(QString tableName) {

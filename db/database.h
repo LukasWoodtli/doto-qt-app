@@ -14,8 +14,8 @@ public:
 	void createSchema();
 
 	// CREATE
-	template<class DTO>
-	void createRecord(const DTO& dto) {
+	template<class DTO_T>
+	void createRecord(const DTO_T& dto) {
 		createRecordFromSql(internal::createRecordSql(dto));
 	}
 
@@ -23,6 +23,12 @@ public:
 	template<class DTO_T>
 	DTO_T readRecord(const QUuid& uuid) const {
 		return internal::readRecord<DTO_T>(uuid);
+	}
+
+	// UPDATE
+	template<class DTO_T>
+	void updateRecord(const DTO_T& dto) const {
+		internal::updateRecord<DTO_T>(dto);
 	}
 
 	// DELETE

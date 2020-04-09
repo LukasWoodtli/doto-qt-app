@@ -8,6 +8,7 @@
 #include "data_transfer_objects.h"
 #include "database_schema.h"
 #include "mappings.h"
+#include <QSqlError>
 
 namespace db::internal {
 
@@ -79,6 +80,35 @@ const constexpr auto READ_SQL_TEMPLATE = "SELECT * FROM %1 WHERE UUID='%2'";
 #define FOREIGN_KEY(column, foreign_table, foreign_column)
 #define ENDTABLE()                                                             \
 	return dto;                                                                  \
+	}
+#include "db_schema.xdef"
+#undef TABLE
+#undef COLUMN
+#undef FOREIGN_KEY
+#undef ENDTABLE
+
+// UPDATE
+const constexpr auto UPDATE_SQL_TEMPLATE = "UPDATE %1 SET %2 WHERE UUID='%3'";
+#define TABLE(name)                                                            \
+	template<>                                                                   \
+	void updateRecord<name##_DTO>(const name##_DTO& dto) {                       \
+		const auto tableName = #name;
+QStringList updateFieldList;
+#define COLUMN(name, type, ...)                                                \
+	updateFieldList.append(#name " = '" +                                        \
+	                       mappings::mapping<type>::toDb(dto.m_##name) + "'");
+#define FOREIGN_KEY(column, foreign_table, foreign_column)
+#define ENDTABLE()                                                             \
+	auto querySql = QString(UPDATE_SQL_TEMPLATE)                                 \
+	                  .arg(tableName)                                            \
+	                  .arg(updateFieldList.join(", "))                           \
+	                  .arg(dto.m_Uuid.toString(QUuid::WithoutBraces));           \
+	qDebug() << "UPDATE SQL query: " << querySql;                                \
+	QSqlQuery query(querySql);                                                   \
+	[[maybe_unused]] const auto success = query.exec();                          \
+	qDebug() << query.lastQuery();                                               \
+	qDebug() << query.lastError();                                               \
+	Q_ASSERT(success);                                                           \
 	}
 #include "db_schema.xdef"
 #undef TABLE
