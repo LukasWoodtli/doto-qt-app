@@ -11,11 +11,20 @@
 namespace db::internal {
 
 QStringList schemaCreationSql() {
-    static const QStringList createTableQuerries = {
-#define TABLE(name) { QString("CREATE TABLE IF NOT EXISTS " #name " (GUID TEXT UNIQUE")
-#define COLUMN(name, type, ...) + " , " #name " " + mappings::mapping<type>::DB_TYPE + " " #__VA_ARGS__
-#define FOREIGN_KEY(column, foreign_table, foreign_column) + ", FOREIGN KEY(" #column ") REFERENCES " #foreign_table "(" #foreign_column ")"
-#define ENDTABLE() + QStringLiteral(")") },
+	QStringList createTableQueries;
+#define TABLE(name)                                                            \
+	{                                                                            \
+		auto query =                                                               \
+		  QString("CREATE TABLE IF NOT EXISTS " #name " (UUID TEXT UNIQUE")
+#define COLUMN(name, type, ...)                                                \
+	+", " #name " " + mappings::mapping<type>::DB_TYPE + " " #__VA_ARGS__
+#define FOREIGN_KEY(column, foreign_table, foreign_column)                     \
+	+", FOREIGN KEY(" #column ") REFERENCES " #foreign_table "(" #foreign_column \
+	 ")"
+#define ENDTABLE()                                                             \
+	+QStringLiteral(")");                                                        \
+	createTableQueries << query.simplified();                                    \
+	}
 
 #include "db_schema.xdef"
 
@@ -24,11 +33,28 @@ QStringList schemaCreationSql() {
 #undef VARIANT_COLUMN
 #undef FOREIGN_KEY
 #undef ENDTABLE
-    };
 
-    return createTableQuerries;
+	return createTableQueries;
 }
 
+// CREATE
+#define TABLE(name)                                                            \
+	QString createRecordSql(const name##_DTO& dto) {                             \
+		auto sqlQuery = QString("INSERT INTO " #name " VALUES (");                 \
+		sqlQuery += "'" + dto.m_Uuid.toString(QUuid::WithoutBraces) + "'";
+#define COLUMN(name, type, ...)                                                \
+	sqlQuery += ", '" + mappings::mapping<type>::toDb(dto.m_##name) + "'";
+#define FOREIGN_KEY(column, foreign_table, foreign_column)                     \
+	qDebug() << "TODO: Add shared_ptr from " << #column << " to "                \
+	         << #foreign_table << ":" << #foreign_column;
+#define ENDTABLE()                                                             \
+	sqlQuery += ")";                                                             \
+	return sqlQuery.simplified();                                                \
+	}
+#include "db_schema.xdef"
+#undef TABLE
+#undef COLUMN
+#undef FOREIGN_KEY
+#undef ENDTABLE
+
 }
-
-
