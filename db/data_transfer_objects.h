@@ -6,9 +6,13 @@
 
 namespace db {
 
-#define TABLE(name) struct name##_DTO { explicit name##_DTO() \
-    : m_Uuid(QUuid::createUuid()) {}; \
-    const QUuid m_Uuid;
+#define TABLE(name)                                                            \
+	struct name##_DTO {                                                          \
+		explicit name##_DTO()                                                      \
+		  : m_Uuid(QUuid::createUuid()){};                                         \
+		explicit name##_DTO(const QUuid& uuid)                                     \
+		  : m_Uuid(uuid){};                                                        \
+		const QUuid m_Uuid;
 #define COLUMN(name, type, ...) type m_##name;
 #define FOREIGN_KEY(column, foreign_table, foreign_column)
 #define ENDTABLE() };

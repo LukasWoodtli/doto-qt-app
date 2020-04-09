@@ -1,6 +1,7 @@
-#include <QStringList>
-#include <QString>
 #include <QDate>
+#include <QSqlQuery>
+#include <QString>
+#include <QStringList>
 
 #include <tuple>
 
@@ -57,4 +58,31 @@ QStringList schemaCreationSql() {
 #undef FOREIGN_KEY
 #undef ENDTABLE
 
+// READ
+const constexpr auto READ_SQL_TEMPLATE = "SELECT * FROM %1 WHERE UUID='%2'";
+#define TABLE(name)                                                            \
+	template<>                                                                   \
+	name##_DTO readRecord<name##_DTO>(const QUuid& uuid) {                       \
+		const auto querySql = QString(READ_SQL_TEMPLATE)                           \
+		                        .arg(#name)                                        \
+		                        .arg(uuid.toString(QUuid::WithoutBraces));         \
+		qDebug() << "READ SQL query: " << querySql;                                \
+		QSqlQuery query(querySql);                                                 \
+		const auto success = query.exec();                                         \
+		Q_ASSERT(success);                                                         \
+		query.next();                                                              \
+		name##_DTO dto{query.value(0).value<QUuid>()};                             \
+		auto columnCount = 1;
+#define COLUMN(name, type, ...)                                                \
+	dto.m_##name = query.value(columnCount).value<type>();                       \
+	++columnCount;
+#define FOREIGN_KEY(column, foreign_table, foreign_column)
+#define ENDTABLE()                                                             \
+	return dto;                                                                  \
+	}
+#include "db_schema.xdef"
+#undef TABLE
+#undef COLUMN
+#undef FOREIGN_KEY
+#undef ENDTABLE
 }

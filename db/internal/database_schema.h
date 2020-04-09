@@ -19,4 +19,20 @@ QStringList schemaCreationSql();
 #undef FOREIGN_KEY
 #undef ENDTABLE
 
+// READ
+template<class DTO_T>
+DTO_T readRecord(const QUuid& uuid);
+
+#define TABLE(name)                                                            \
+	template<>                                                                   \
+	name##_DTO readRecord<name##_DTO>(const QUuid& uuid);
+#define COLUMN(name, type, ...)
+#define FOREIGN_KEY(column, foreign_table, foreign_column)
+#define ENDTABLE()
+#include "db_schema.xdef"
+#undef TABLE
+#undef COLUMN
+#undef FOREIGN_KEY
+#undef ENDTABLE
+
 }

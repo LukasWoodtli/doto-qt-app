@@ -19,6 +19,11 @@ public:
 		createRecordFromSql(internal::createRecordSql(dto));
 	}
 
+	template<class DTO_T>
+	DTO_T readRecord(const QUuid& uuid) const {
+		return internal::readRecord<DTO_T>(uuid);
+	}
+
 private:
 	void createRecordFromSql(QString sql);
 

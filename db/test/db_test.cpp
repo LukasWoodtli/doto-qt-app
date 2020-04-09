@@ -79,6 +79,35 @@ private slots:
 		QCOMPARE(query.value(0).toString(),
 		         tasksDto.m_Uuid.toString(QUuid::WithoutBraces));
 		QCOMPARE(query.value(1).toString(), name);
+		QCOMPARE(query.value(2).toBool(), done);
+		QCOMPARE(query.value(3).toDate(), due);
+	}
+
+	void testReadTaskRecord_data() {
+		QTest::addColumn<QString>("name");
+		QTest::addColumn<bool>("done");
+		QTest::addColumn<QDate>("due");
+
+		QTest::newRow("unfinished") << "hello" << false << QDate(1980, 7, 7);
+		QTest::newRow("done") << "hello2" << true << QDate(2020, 7, 7);
+	}
+
+	void testReadTaskRecord() {
+		QFETCH(QString, name);
+		QFETCH(bool, done);
+		QFETCH(QDate, due);
+		db::TASKS_DTO tasksDto{};
+		tasksDto.m_NAME = name;
+		tasksDto.m_DONE = done;
+		tasksDto.m_DUE_DATE = due;
+		m_db->createRecord(tasksDto);
+
+		db::TASKS_DTO tasksDtoFromDb =
+		  m_db->readRecord<db::TASKS_DTO>(tasksDto.m_Uuid);
+		QCOMPARE(tasksDtoFromDb.m_Uuid, tasksDto.m_Uuid);
+		QCOMPARE(tasksDtoFromDb.m_NAME, tasksDto.m_NAME);
+		QCOMPARE(tasksDtoFromDb.m_DONE, tasksDto.m_DONE);
+		QCOMPARE(tasksDtoFromDb.m_DUE_DATE, tasksDto.m_DUE_DATE);
 	}
 
 private:
