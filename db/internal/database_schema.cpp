@@ -85,4 +85,25 @@ const constexpr auto READ_SQL_TEMPLATE = "SELECT * FROM %1 WHERE UUID='%2'";
 #undef COLUMN
 #undef FOREIGN_KEY
 #undef ENDTABLE
+
+// DELETE
+const constexpr auto DELETE_SQL_TEMPLATE = "DELETE * FROM %1 WHERE UUID='%2'";
+#define TABLE(name)                                                            \
+	template<>                                                                   \
+	void deleteRecord<name##_DTO>(const QUuid& uuid) {                           \
+		const auto querySql = QString(READ_SQL_TEMPLATE)                           \
+		                        .arg(#name)                                        \
+		                        .arg(uuid.toString(QUuid::WithoutBraces));         \
+		qDebug() << "DELETE SQL query: " << querySql;                              \
+		QSqlQuery query(querySql);                                                 \
+		[[maybe_unused]] const auto success = query.exec();                        \
+		Q_ASSERT(success);
+#define COLUMN(name, type, ...)
+#define FOREIGN_KEY(column, foreign_table, foreign_column)
+#define ENDTABLE() }
+#include "db_schema.xdef"
+#undef TABLE
+#undef COLUMN
+#undef FOREIGN_KEY
+#undef ENDTABLE
 }

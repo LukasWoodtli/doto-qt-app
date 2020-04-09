@@ -19,9 +19,16 @@ public:
 		createRecordFromSql(internal::createRecordSql(dto));
 	}
 
+	// READ
 	template<class DTO_T>
 	DTO_T readRecord(const QUuid& uuid) const {
 		return internal::readRecord<DTO_T>(uuid);
+	}
+
+	// DELETE
+	template<class DTO_T>
+	void deleteRecord(const QUuid& uuid) const {
+		internal::deleteRecord<DTO_T>(uuid);
 	}
 
 private:

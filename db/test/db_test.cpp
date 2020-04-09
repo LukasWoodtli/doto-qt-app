@@ -110,6 +110,44 @@ private slots:
 		QCOMPARE(tasksDtoFromDb.m_DUE_DATE, tasksDto.m_DUE_DATE);
 	}
 
+	void testDeleteTaskRecord_data() {
+		QTest::addColumn<QString>("name");
+		QTest::addColumn<bool>("done");
+		QTest::addColumn<QDate>("due");
+
+		QTest::newRow("unfinished") << "Task1" << false << QDate(1980, 7, 7);
+		QTest::newRow("done") << "Task2" << true << QDate(2020, 7, 7);
+	}
+
+	void testDeleteTaskRecord() {
+		QFETCH(QString, name);
+		QFETCH(bool, done);
+		QFETCH(QDate, due);
+		db::TASKS_DTO tasksDto{};
+		tasksDto.m_NAME = name;
+		tasksDto.m_DONE = done;
+		tasksDto.m_DUE_DATE = due;
+		m_db->createRecord(tasksDto);
+
+		m_db->deleteRecord<db::TASKS_DTO>(tasksDto.m_Uuid);
+
+		QSqlQuery query = QSqlQuery();
+		const auto querySql =
+		  QString("SELECT * FROM TASKS WHERE UUID='%1'")
+		    .arg(tasksDto.m_Uuid.toString(QUuid::WithoutBraces));
+		qDebug() << querySql;
+		bool success = query.exec(querySql);
+		qDebug() << query.lastError();
+		QVERIFY(success);
+		query.next();
+	}
+
+	void testReadUnavailableTaskRecord() {
+		const auto uuid = QUuid::createUuid();
+		db::TASKS_DTO tasksDtoFromDb = m_db->readRecord<db::TASKS_DTO>(uuid);
+		QCOMPARE(tasksDtoFromDb.m_Uuid, QUuid());
+	}
+
 private:
 	static QString checkIfTableExistsQuery(QString tableName) {
 		return QStringLiteral(
