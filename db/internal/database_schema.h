@@ -9,7 +9,12 @@ namespace db::internal {
 QStringList schemaCreationSql();
 
 // CREATE
-#define TABLE(name) QString createRecordSql(const name##_DTO& dto);
+template<class DTO_T>
+void createRecord(const DTO_T& dto);
+
+#define TABLE(name)                                                            \
+	template<>                                                                   \
+	void createRecord<name##_DTO>(const name##_DTO& dto);
 #define COLUMN(name, type, ...)
 #define FOREIGN_KEY(column, foreign_table, foreign_column)
 #define ENDTABLE()

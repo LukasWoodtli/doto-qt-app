@@ -16,7 +16,7 @@ public:
 	// CREATE
 	template<class DTO_T>
 	void createRecord(const DTO_T& dto) {
-		createRecordFromSql(internal::createRecordSql(dto));
+		internal::createRecord<DTO_T>(dto);
 	}
 
 	// READ
@@ -36,9 +36,6 @@ public:
 	void deleteRecord(const QUuid& uuid) const {
 		internal::deleteRecord<DTO_T>(uuid);
 	}
-
-private:
-	void createRecordFromSql(QString sql);
 
 private:
 	QSqlDatabase m_database;

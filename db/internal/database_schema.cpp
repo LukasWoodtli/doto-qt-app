@@ -1,14 +1,12 @@
 #include <QDate>
+#include <QSqlError>
 #include <QSqlQuery>
 #include <QString>
 #include <QStringList>
 
-#include <tuple>
-
 #include "data_transfer_objects.h"
 #include "database_schema.h"
 #include "mappings.h"
-#include <QSqlError>
 
 namespace db::internal {
 
@@ -41,7 +39,8 @@ QStringList schemaCreationSql() {
 
 // CREATE
 #define TABLE(name)                                                            \
-	QString createRecordSql(const name##_DTO& dto) {                             \
+	template<>                                                                   \
+	void createRecord<name##_DTO>(const name##_DTO& dto) {                       \
 		auto sqlQuery = QString("INSERT INTO " #name " VALUES (");                 \
 		sqlQuery += "'" + dto.m_Uuid.toString(QUuid::WithoutBraces) + "'";
 #define COLUMN(name, type, ...)                                                \
@@ -51,7 +50,11 @@ QStringList schemaCreationSql() {
 	         << #foreign_table << ":" << #foreign_column;
 #define ENDTABLE()                                                             \
 	sqlQuery += ")";                                                             \
-	return sqlQuery.simplified();                                                \
+	qDebug() << "Create record with SQL: " << sqlQuery;                          \
+	QSqlQuery query = QSqlQuery();                                               \
+	[[maybe_unused]] const auto result = query.exec(sqlQuery);                   \
+	qDebug() << query.lastError();                                               \
+	Q_ASSERT(result);                                                            \
 	}
 #include "db_schema.xdef"
 #undef TABLE

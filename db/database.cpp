@@ -47,12 +47,4 @@ void DataBase::createSchema() {
 	assertDbEncodingIsUtf8();
 }
 
-void DataBase::createRecordFromSql(QString sql) {
-	qDebug() << "Create record with SQL: " << sql;
-	QSqlQuery query = QSqlQuery();
-	[[maybe_unused]] const auto result = query.exec(sql);
-	qDebug() << query.lastError();
-	Q_ASSERT(result);
-}
-
 }
