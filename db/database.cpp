@@ -18,7 +18,6 @@ void assertDbEncodingIsUtf8() {
 	}
 }
 
-
 namespace db {
 
 DataBase::DataBase(QString dbName, QObject* parent)
@@ -28,6 +27,11 @@ DataBase::DataBase(QString dbName, QObject* parent)
 	m_database.setDatabaseName(dbName);
 }
 
+DataBase::~DataBase() {
+	m_database.close();
+	QSqlDatabase::removeDatabase(m_database.connectionName());
+}
+
 void DataBase::createSchema() {
 
 	if (not m_database.open())
@@ -35,14 +39,7 @@ void DataBase::createSchema() {
 		            << m_database.databaseName()
 		            << " Error: " << m_database.lastError();
 
-	QSqlQuery query = QSqlQuery();
-	const auto queryStrings = db::internal::schemaCreationSql();
-	qDebug() << "Create DB schema with querries:";
-	for (const auto& queryString : queryStrings) {
-		qDebug() << queryString;
-		[[maybe_unused]] const auto result = query.exec(queryString);
-		Q_ASSERT(result);
-	}
+	db::internal::createSchema();
 
 	assertDbEncodingIsUtf8();
 }

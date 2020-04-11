@@ -10,6 +10,7 @@ class DataBase : public QObject {
 	Q_OBJECT
 public:
 	explicit DataBase(QString name, QObject* parent = nullptr);
+	virtual ~DataBase();
 
 	void createSchema();
 

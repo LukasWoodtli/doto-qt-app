@@ -7,6 +7,11 @@
 #include <QSqlQuery>
 #include <QtTest/QtTest>
 
+// declare non-public function
+namespace db::internal {
+QStringList schemaCreationSql();
+}
+
 class TestDb : public QObject {
 	Q_OBJECT
 public:

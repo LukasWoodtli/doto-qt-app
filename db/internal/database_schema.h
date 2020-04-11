@@ -6,7 +6,7 @@
 #include "mappings.h"
 
 namespace db::internal {
-QStringList schemaCreationSql();
+void createSchema();
 
 // CREATE
 template<class DTO_T>

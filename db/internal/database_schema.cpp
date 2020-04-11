@@ -8,22 +8,45 @@
 #include "database_schema.h"
 #include "mappings.h"
 
+namespace {
+QSqlQuery executeQuery(const QString& querySql) {
+	QSqlQuery query = QSqlQuery();
+	const auto success = query.exec(querySql);
+	qDebug() << "Executing SQL: " << query.lastQuery();
+	if (not success) {
+		qCritical() << query.lastError();
+	}
+	Q_ASSERT(success);
+	query.next();
+	return query;
+}
+}
 namespace db::internal {
-
+const constexpr auto CREATE_TABLE_SQL_TEMPLATE =
+  "CREATE TABLE IF NOT EXISTS %1 (%2)";
+const constexpr auto FOREIGN_KEY_SQL_TEMPLATE =
+  "FOREIGN KEY(%1) REFERENCES %2(%3)";
 QStringList schemaCreationSql() {
 	QStringList createTableQueries;
 #define TABLE(name)                                                            \
 	{                                                                            \
-		auto query =                                                               \
-		  QString("CREATE TABLE IF NOT EXISTS " #name " (UUID TEXT UNIQUE")
+		const auto tableName = #name;                                              \
+		QStringList columnsAndForeignConstraints;                                  \
+		columnsAndForeignConstraints.append("UUID TEXT UNIQUE");
 #define COLUMN(name, type, ...)                                                \
-	+", " #name " " + mappings::mapping<type>::DB_TYPE + " " #__VA_ARGS__
+	columnsAndForeignConstraints.append(                                         \
+	  QString(#name " ") + mappings::mapping<type>::DB_TYPE + " " #__VA_ARGS__);
 #define FOREIGN_KEY(column, foreign_table, foreign_column)                     \
-	+", FOREIGN KEY(" #column ") REFERENCES " #foreign_table "(" #foreign_column \
-	 ")"
+	columnsAndForeignConstraints.append(QString(FOREIGN_KEY_SQL_TEMPLATE)        \
+	                                      .arg(#column)                          \
+	                                      .arg(#foreign_table)                   \
+	                                      .arg(#foreign_column));
 #define ENDTABLE()                                                             \
-	+QStringLiteral(")");                                                        \
-	createTableQueries << query.simplified();                                    \
+	const auto queryForOneTable =                                                \
+	  QString(CREATE_TABLE_SQL_TEMPLATE)                                         \
+	    .arg(tableName)                                                          \
+	    .arg(columnsAndForeignConstraints.join(", "));                           \
+	createTableQueries << queryForOneTable.simplified();                         \
 	}
 
 #include "db_schema.xdef"
@@ -36,25 +59,35 @@ QStringList schemaCreationSql() {
 
 	return createTableQueries;
 }
+void createSchema() {
+	for (const auto& querySql : schemaCreationSql())
+		executeQuery(querySql);
+}
 
 // CREATE
+const constexpr auto CREATE_SQL_TEMPLATE = "INSERT INTO %1 (%2) VALUES(%3)";
+// "INSERT INTO TASKS VALUES ('31bd6531-7e85-4fa3-9969-5e57aa65fa1e', '', '0',
+// '')"
 #define TABLE(name)                                                            \
 	template<>                                                                   \
 	void createRecord<name##_DTO>(const name##_DTO& dto) {                       \
-		auto sqlQuery = QString("INSERT INTO " #name " VALUES (");                 \
-		sqlQuery += "'" + dto.m_Uuid.toString(QUuid::WithoutBraces) + "'";
+		const auto tableName = #name;                                              \
+		QStringList columnNames;                                                   \
+		QStringList values;                                                        \
+		columnNames.append("UUID");                                                \
+		values.append("'" + dto.m_Uuid.toString(QUuid::WithoutBraces) + "'");
 #define COLUMN(name, type, ...)                                                \
-	sqlQuery += ", '" + mappings::mapping<type>::toDb(dto.m_##name) + "'";
+	columnNames.append(#name);                                                   \
+	values.append("'" + mappings::mapping<type>::toDb(dto.m_##name) + "'");
 #define FOREIGN_KEY(column, foreign_table, foreign_column)                     \
 	qDebug() << "TODO: Add shared_ptr from " << #column << " to "                \
 	         << #foreign_table << ":" << #foreign_column;
 #define ENDTABLE()                                                             \
-	sqlQuery += ")";                                                             \
-	qDebug() << "Create record with SQL: " << sqlQuery;                          \
-	QSqlQuery query = QSqlQuery();                                               \
-	[[maybe_unused]] const auto result = query.exec(sqlQuery);                   \
-	qDebug() << query.lastError();                                               \
-	Q_ASSERT(result);                                                            \
+	const auto query = QString(CREATE_SQL_TEMPLATE)                              \
+	                     .arg(tableName)                                         \
+	                     .arg(columnNames.join(", "))                            \
+	                     .arg(values.join(", "));                                \
+	executeQuery(query);                                                         \
 	}
 #include "db_schema.xdef"
 #undef TABLE
@@ -70,11 +103,7 @@ const constexpr auto READ_SQL_TEMPLATE = "SELECT * FROM %1 WHERE UUID='%2'";
 		const auto querySql = QString(READ_SQL_TEMPLATE)                           \
 		                        .arg(#name)                                        \
 		                        .arg(uuid.toString(QUuid::WithoutBraces));         \
-		qDebug() << "READ SQL query: " << querySql;                                \
-		QSqlQuery query(querySql);                                                 \
-		const auto success = query.exec();                                         \
-		Q_ASSERT(success);                                                         \
-		query.next();                                                              \
+		const auto query = executeQuery(querySql);                                 \
 		name##_DTO dto{query.value(0).value<QUuid>()};                             \
 		auto columnCount = 1;
 #define COLUMN(name, type, ...)                                                \
@@ -106,12 +135,7 @@ QStringList updateFieldList;
 	                  .arg(tableName)                                            \
 	                  .arg(updateFieldList.join(", "))                           \
 	                  .arg(dto.m_Uuid.toString(QUuid::WithoutBraces));           \
-	qDebug() << "UPDATE SQL query: " << querySql;                                \
-	QSqlQuery query(querySql);                                                   \
-	[[maybe_unused]] const auto success = query.exec();                          \
-	qDebug() << query.lastQuery();                                               \
-	qDebug() << query.lastError();                                               \
-	Q_ASSERT(success);                                                           \
+	executeQuery(querySql);                                                      \
 	}
 #include "db_schema.xdef"
 #undef TABLE
@@ -127,10 +151,7 @@ const constexpr auto DELETE_SQL_TEMPLATE = "DELETE * FROM %1 WHERE UUID='%2'";
 		const auto querySql = QString(READ_SQL_TEMPLATE)                           \
 		                        .arg(#name)                                        \
 		                        .arg(uuid.toString(QUuid::WithoutBraces));         \
-		qDebug() << "DELETE SQL query: " << querySql;                              \
-		QSqlQuery query(querySql);                                                 \
-		[[maybe_unused]] const auto success = query.exec();                        \
-		Q_ASSERT(success);
+		executeQuery(querySql);
 #define COLUMN(name, type, ...)
 #define FOREIGN_KEY(column, foreign_table, foreign_column)
 #define ENDTABLE() }
