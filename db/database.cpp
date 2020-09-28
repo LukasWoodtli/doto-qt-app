@@ -21,24 +21,23 @@ void assertDbEncodingIsUtf8() {
 namespace db {
 
 DataBase::DataBase(QString dbName, QObject* parent)
-  : QObject(parent) {
-	m_database = QSqlDatabase::addDatabase("QSQLITE");
-	Q_ASSERT(m_database.isValid());
-	m_database.setDatabaseName(dbName);
+  : QObject(parent), m_dataBaseName(dbName) {
+	auto database = QSqlDatabase::addDatabase("QSQLITE");
+	Q_ASSERT(database.isValid());
+	database.setDatabaseName(dbName);
+	database.open();
+
+  if (not database.open())
+    qCritical() << "Error opening database with name "
+                << database.databaseName()
+                << " Error: " << database.lastError();
 }
 
 DataBase::~DataBase() {
-	m_database.close();
-	QSqlDatabase::removeDatabase(m_database.connectionName());
+  QSqlDatabase::removeDatabase(m_dataBaseName);
 }
 
 void DataBase::createSchema() {
-
-	if (not m_database.open())
-		qCritical() << "Error opening database with name "
-		            << m_database.databaseName()
-		            << " Error: " << m_database.lastError();
-
 	db::internal::createSchema();
 
 	assertDbEncodingIsUtf8();

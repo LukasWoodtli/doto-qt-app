@@ -1,9 +1,11 @@
 #pragma once
 
 #include <QObject>
-#include <QSqlDatabase>
+#include <QString>
 
 #include "internal/database_schema.h"
+
+class QSqlDatabase;
 namespace db {
 
 class DataBase : public QObject {
@@ -38,8 +40,7 @@ public:
 		internal::deleteRecord<DTO_T>(uuid);
 	}
 
-private:
-	QSqlDatabase m_database;
+	QString m_dataBaseName;
 };
 
 }

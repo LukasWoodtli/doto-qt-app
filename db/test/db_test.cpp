@@ -1,6 +1,5 @@
 #include "data_transfer_objects.h"
 #include "database.h"
-#include "internal/database_schema.h"
 
 #include <QSharedPointer>
 #include <QSqlError>
